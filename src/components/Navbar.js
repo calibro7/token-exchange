@@ -32,7 +32,7 @@ const Navbar = () => {
     <div className='exchange__header grid'>
       <div className='exchange__header--brand flex'>
         <img src={logo} className="logo" alt="RaddU logo"></img>
-        <h1>RaddU Token Exchange</h1>
+        <h1>RU Token Exchange</h1>
       </div>
 
       <div className='exchange__header--networks flex'>
