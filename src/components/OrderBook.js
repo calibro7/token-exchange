@@ -4,6 +4,8 @@ import sort from '../assets/sort.svg'
 
 import { orderBookSelector } from '../store/selectors'
 
+import Banner from './Banner'
+
 const OrderBook = () => {
   const symbols = useSelector(state => state.tokens.symbols)
   const orderBook = useSelector(orderBookSelector)
@@ -17,8 +19,8 @@ const OrderBook = () => {
 
       <div className="flex">
 
-        {!orderBook || orderBook.sellOrders.lenght === 0 ? (
-            <p className='flex-center'>No Sell Orders</p>
+        {!orderBook || orderBook.sellOrders.length === 0 ? (
+            <Banner text="No Orders Yet :("/>
           ) : (
             <table className='exchange__orderbook--sell'>
               <caption>Selling</caption>
@@ -47,9 +49,9 @@ const OrderBook = () => {
   
         <div className='divider'></div>
 
-          {!orderBook || orderBook.buyOrders.lenght === 0 ? (
-            <p className='flex-center'>No Buy Orders</p>
-          ) : (
+          {!orderBook || orderBook.buyOrders.length === 0 ? (
+            <Banner text="No Orders Yet :("/>
+          ): (
             <table className='exchange__orderbook--buy'>
               <caption>Buying</caption>
               <thead>
