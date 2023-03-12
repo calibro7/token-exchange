@@ -52,6 +52,11 @@ export const loadExchange = async (provider, address, dispatch) => {
 }
 
 export const subscribeToEvents = (exchange, dispatch) => {
+  exchange.on('Cancel', (id, user, tokenGet, amountGet, tokenGive, amountGive, timestamp, event) => {
+    const order = event.args
+    dispatch({ type: 'ORDER_CANCEL_SUCCESS', order, event })
+  })
+
   exchange.on('Deposit', (token, user, amount, balance, event) => {
     dispatch({ type: 'TRANSFER_SUCCESS', event })
   })
@@ -65,7 +70,6 @@ export const subscribeToEvents = (exchange, dispatch) => {
     dispatch({ type: 'NEW_ORDER_SUCCESS', order, event })
   })
 }
-
 
 // ------------------------------------------------------------------------------
 // LOAD USER BALANCES (WALLET & EXCHANGE BALANCES)
@@ -86,24 +90,33 @@ export const loadBalances = async (exchange, tokens, account, dispatch) => {
 
 }
 
+
+// ------------------------------------------------------------------------------
+// LOAD ALL ORDERS
+
 export const loadAllOrders = async (provider, exchange, dispatch) => {
+
   const block = await provider.getBlockNumber()
 
-  const tradeStream = await exchange.queryFilter('Trade', 0, block)
-  const filledOrders = tradeStream.map(event => event.args)
-
-  dispatch({ type: 'FILLED_ORDERS_LOADED', filledOrders })
-
+  // Fetch canceled orders
   const cancelStream = await exchange.queryFilter('Cancel', 0, block)
   const cancelledOrders = cancelStream.map(event => event.args)
 
   dispatch({ type: 'CANCELLED_ORDERS_LOADED', cancelledOrders })
 
+  // Fetch filled orders
+  const tradeStream = await exchange.queryFilter('Trade', 0, block)
+  const filledOrders = tradeStream.map(event => event.args)
+
+  dispatch({ type: 'FILLED_ORDERS_LOADED', filledOrders })
+
+  // Fetch all orders
   const orderStream = await exchange.queryFilter('Order', 0, block)
   const allOrders = orderStream.map(event => event.args)
 
   dispatch({ type: 'ALL_ORDERS_LOADED', allOrders })
 }
+
 
 // ------------------------------------------------------------------------------
 // TRANSFER TOKENS (DEPOSIT & WITHDRAWS)
@@ -121,16 +134,19 @@ export const transferTokens =  async (provider, exchange, transferType, token, a
       transaction = await token.connect(signer).approve(exchange.address, amountToTransfer)
       await transaction.wait()
       transaction = await exchange.connect(signer).depositToken(token.address, amountToTransfer)
-	} else {
-		transaction = await exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
-	}
-    
+    } else {
+      transaction = await exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
+    }
+
     await transaction.wait()
 
   } catch(error) {
     dispatch({ type: 'TRANSFER_FAIL' })
   }
 }
+
+// ------------------------------------------------------------------------------
+// ORDERS (BUY & SELL)
 
 export const makeBuyOrder = async (provider, exchange, tokens, order, dispatch) => {
   const tokenGet = tokens[0].address
@@ -165,3 +181,20 @@ export const makeSellOrder = async (provider, exchange, tokens, order, dispatch)
     dispatch({ type: 'NEW_ORDER_FAIL' })
   }
 }
+
+// ------------------------------------------------------------------------------
+// CANCEL ORDER
+
+export const cancelOrder = async (provider, exchange, order, dispatch) => {
+
+  dispatch({ type: 'ORDER_CANCEL_REQUEST' })
+
+  try {
+    const signer = await provider.getSigner()
+    const transaction = await exchange.connect(signer).cancelOrder(order.id)
+    await transaction.wait()
+  } catch (error) {
+    dispatch({ type: 'ORDER_CANCEL_FAIL' })
+  }
+}
+

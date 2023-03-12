@@ -112,7 +112,7 @@ async function main() {
   }
 
   for(let i = 1; i <= 10; i++) {
-    transaction = await exchange.connect(user2).makeOrder(Raddu.address, tokens(10 * i), rETH.address, tokens(10 * i))
+    transaction = await exchange.connect(user2).makeOrder(Raddu.address, tokens(10), rETH.address, tokens(10 * i))
     result = await transaction.wait()
 
     console.log(`Made order from ${user2.address}`)
